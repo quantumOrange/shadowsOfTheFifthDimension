@@ -1,113 +1,33 @@
 #version 150
+
+// Created by David Crooks
+// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+
 uniform float time;
-
-
-uniform vec4 lambda;
-uniform float lambda5;
-
-
-uniform sampler2DRect tex0;
+uniform vec4 origin_a;
+uniform float origin_v;
+uniform vec2 resolution;
 
 out vec4 outputColor;
 
-#define TWO_PI 6.283185
+struct vec5 {
+    vec4 a;
+    float v;
+};
 
-vec3 checker(vec2 p)
-{
-    if ((int(floor(p.x) + floor(p.y)) & 1) == 0)
-        return vec3(1.0);
-    else
-        return vec3(0.0);
-}
-vec3 checker3D(vec3 p)
-{
-    // float gray = 0.5 + (0.5/3.0)*(cos(TWO_PI * p.x) + cos(TWO_PI * p.y) + cos(TWO_PI * p.z));
-    //return vec3(gray);
-    vec3 v = mod(p,1.0);
-    
-    if ((int(floor(p.x) + floor(p.y) + floor(p.z)) & 1) == 0){
-        
-        float   l = length(v-vec3(0.5));
-        float c = 0.5+ 0.5*cos(11*TWO_PI*l);
-        return vec3(1.0 -0.66*c);
-    }
-    else
-    {
-        
-        float   l = length(v);
-        float c = 0.5+ 0.5*cos(9*TWO_PI*l);
-        // return vec3(1.0,c,l);
-        return vec3(0.0 +0.66*c);
-    }
+vec5 plane5(vec5 origin, vec5 u, vec5 v, vec2 p){
+    return vec5(origin.a + p.x*u.a + p.y*v.a,
+                origin.v + p.x*u.v + p.y*v.v);
 }
 
-vec3 checker5D(vec4 p , float fithDim)
-{
-    if ((int(floor(p.x) + floor(p.y) + floor(p.z) + floor(p.w) + floor(fithDim)) & 1) == 0){
-        
-        
-        return vec3(1.0);
-    }
-    else
-    {
-        
-        return vec3(0.0);
-    }
+vec5 mult5(vec5 p, float multiplier) {
+    p.a *=  multiplier;
+    p.v *= multiplier;
+    return p;
 }
 
-float HueToRGB(float f1, float f2, float hue)
-{
-    if (hue < 0.0)
-        hue += 1.0;
-    else if (hue > 1.0)
-        hue -= 1.0;
-    float res;
-    if ((6.0 * hue) < 1.0)
-        res = f1 + (f2 - f1) * 6.0 * hue;
-    else if ((2.0 * hue) < 1.0)
-        res = f2;
-    else if ((3.0 * hue) < 2.0)
-        res = f1 + (f2 - f1) * ((2.0 / 3.0) - hue) * 6.0;
-    else
-        res = f1;
-    return res;
-}
-
-vec3 HSLToRGB(vec3 hsl)
-{
-    vec3 rgb;
-    
-    if (hsl.y == 0.0)
-        rgb = vec3(hsl.z); // Luminance
-    else
-    {
-        float f2;
-        
-        if (hsl.z < 0.5)
-            f2 = hsl.z * (1.0 + hsl.y);
-        else
-            f2 = (hsl.z + hsl.y) - (hsl.y * hsl.z);
-        
-        float f1 = 2.0 * hsl.z - f2;
-        
-        rgb.r = HueToRGB(f1, f2, hsl.x + (1.0/3.0));
-        rgb.g = HueToRGB(f1, f2, hsl.x);
-        rgb.b = HueToRGB(f1, f2, hsl.x - (1.0/3.0));
-    }
-    
-    return rgb;
-}
-
-
-vec3 rgb2hsv(vec3 c)
-{
-    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-    
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
-    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+vec5 mod5(vec5 p, float m) {
+    return vec5(mod(p.a,m),mod(p.v,m));
 }
 
 vec3 hsv2rgb(vec3 c)
@@ -117,20 +37,45 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-
-
-bool dualTileZoneTest(vec4 p , float p5, float value){
-    bool down  = all(lessThanEqual(vec4(value),p)) && value <= p5 && all(lessThanEqual(vec4(value),vec4(1.0)-p)) && value <= (1.0-p5);
-    bool up  = all(greaterThanEqual(vec4(value),p)) && value >= p5 && all(greaterThanEqual(vec4(value),vec4(1.0)-p)) && value >= (1.0-p5);
+bool dualTileZoneTest(vec5 p , float value){
+    bool down  = all(lessThanEqual(vec4(value),p.a)) && value <= p.v && all(lessThanEqual(vec4(value),vec4(1.0)-p.a)) && value <= (1.0-p.v);
+    bool up  = all(greaterThanEqual(vec4(value),p.a)) && value >= p.v && all(greaterThanEqual(vec4(value),vec4(1.0)-p.a)) && value >= (1.0-p.v);
     return down || up;
 }
 
+vec3 pattern(vec5 p ){
+    
+    float hueDelta = 1.0/24.0;
+    
+    p = mod5(p,1.0);
+    
+    if(dualTileZoneTest(p , p.a.x)){
+        return  hsv2rgb(vec3(0.0, 0.7, 0.75));
+    }
+    else if(dualTileZoneTest(p,  p.a.y)){
+        return hsv2rgb(vec3(hueDelta, 0.3,0.8));
+    }
+    else if(dualTileZoneTest(p, p.a.z)){
+        return hsv2rgb(vec3(2.0*hueDelta, 0.2, 0.95));
+    }
+    else if(dualTileZoneTest(p, p.a.w)){
+        return hsv2rgb(vec3(1.0-hueDelta, 0.5, 0.7));
+    }
+    else if(dualTileZoneTest(p,  p.v)){
+        
+        return hsv2rgb(vec3(1.0-2.0*hueDelta,0.3, 0.4));
+    }
+    else {
+        return vec3(0.0);
+    }
+}
+/*
 
-vec3 penrose(vec4 p , float p5){
+vec3 patternOld(vec4 p , float p5){
     
     float hueDelta = 1.0/24.0;
     float lightness = 1.0;
-     float saturation = 0.;
+    float saturation = 0.;
     
     
     vec4 q = mod(p,1.0);
@@ -170,58 +115,55 @@ vec3 penrose(vec4 p , float p5){
           return vec3(0.0);
     }
     
-        
-        
-        
-    
-  /*  if (x < y && x < z && x < w && x < v && x < (1 - y) && x < (1 - z) && x < (1 - w) && x < (1 - v))
-        vec4 q = mod(p,1.0);
-    float x = q.x;
-    float y = q.y;
-    float z = q.z;
-    float w = q.w;
-    float v = mod(p5,1.0);*/
-    
 }
-
+*/
 
 
 void main()
 {
     //centered cartiesan coords
-    vec2 p = (gl_FragCoord.xy)/768 - vec2(0.5*1024/768,0.5);
+    vec2 p = (gl_FragCoord.xy)/resolution.y - vec2(0.5*resolution.x/resolution.y,0.5);
+    
+    //This is the origin of our plane in 5d space.
+   	
+    //vec5 origin = vec5(vec4(time),-time);
+    vec5 origin = vec5(origin_a,origin_v);
     
     
-   //// float lamba0 = time;
-   // vec4 n = vec4(lamba0 + 0.125);
-  //  float n5 = -4*lamba0;
+    //We need two directions to form a plane.
+    //In 3d we can define a plane from a point on the plane (the origin) and a normal, using the cross product to find our two directions.
     
-   //vec5 u =  (-0.511667,0.19544,0.19544,-0.511667,0.632456);
-    //vec5 v = (-0.371748,0.601501,-0.601501,0.371748,0);
+    //But this won't work in 5d. There is no cross product!
+   	//There are many plane normal to vector, becasue there are four directions normal to a given vector.
+    //This is why there is no cross product in higher dimensions!
     
-    vec4 u = vec4(-0.511667,0.19544,0.19544,-0.511667);
-    float u5 = 0.632456;
+    //In analogy with the 3d case, we get interesting patterns in a plane normal to (1,1,1,1,1). (the long diagonal of a hypercube.)
+    //We can find a set of four vectors normal to (1,1,1,1,1) using the Gram Schmidt process
+    //https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process
+    //Any two will do:
     
-    vec4 v = vec4(-0.371748,0.601501,-0.601501,0.371748);
-    float v5 = 0;
+    vec5 u = vec5(vec4(-0.511667,0.19544,0.19544,-0.511667),0.632456) ;
+    vec5 v = vec5(vec4(-0.371748,0.601501,-0.601501,0.371748), 0.0);
     
+    
+    /*
+    //the other two vectors:
     float a =  sqrt(5.0);
     float b = sqrt(5+a);
     float d = sqrt(5-a);
     
-   // vec4 u = (1.0/4.0)*vec4(-1.0+a,-1.0-a,-1.0-a,-1.0+a);
-   // float u5 = 1.0;
-    
-    //vec4 v = (1.0/sqrt(8.0)) * vec4(b,d,-d,-b);
-    //float v5 = 0;
-    
-    vec4 plane =  lambda + p.x*u + p.y*v;
-    float plane5 = lambda5 + p.x*u5 +p.y*v5;
+    vec5 u2 = vec5((1.0/4.0)*vec4(-1.0+a,-1.0-a,-1.0-a,-1.0+a),1.0);
+    vec5 v2 =vec5( (1.0/sqrt(8.0)) * vec4(b,d,-d,-b),0.0);
+    */
     
     
-    float factor = 5;
+    vec5 plane = plane5(origin,u,v,p);
+    plane = mult5(plane,5.0);
     
-    vec3 color = penrose(factor*plane,factor*plane5);
     
+    //Now we have mapped points in the image plane to 5d space we can color pixels based on whe=re thy are in 5d.
+    //We divide the space into a 5d lattice of hypercubes. For each point we find the closest face in the hypercube.
+    //We pair opposite faces to get 5 colors, corresponding to the 5 dimensions.
+    vec3 color = pattern(plane);
     outputColor =  vec4(color, 1.0);
 }

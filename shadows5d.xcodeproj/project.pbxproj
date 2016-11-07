@@ -57,6 +57,7 @@
 		ED2122331D85E08F00113AE2 /* Particle5D.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Particle5D.hpp; sourceTree = "<group>"; };
 		ED2122351D85E11E00113AE2 /* ofxVec5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxVec5.cpp; sourceTree = "<group>"; };
 		ED2122361D85E11E00113AE2 /* ofxVec5.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ofxVec5.hpp; sourceTree = "<group>"; };
+		EDCF35801DD0ED7A00BE9239 /* shadows5d.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = shadows5d.vert; path = src/shadows5d.vert; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +99,7 @@
 			children = (
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
+				EDCF35811DD0ED8800BE9239 /* Shaders */,
 				E4B69E1C0A3A1BDC003C02F2 /* src */,
 				E4EEC9E9138DF44700A80321 /* openFrameworks */,
 				BB4B014C10F69532006C3DED /* addons */,
@@ -109,7 +111,6 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				ED2122311D8592B900113AE2 /* shadows5d.frag */,
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				ED2122321D85E08F00113AE2 /* Particle5D.cpp */,
 				ED2122331D85E08F00113AE2 /* Particle5D.hpp */,
@@ -128,6 +129,15 @@
 				E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */,
 			);
 			name = openFrameworks;
+			sourceTree = "<group>";
+		};
+		EDCF35811DD0ED8800BE9239 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				EDCF35801DD0ED7A00BE9239 /* shadows5d.vert */,
+				ED2122311D8592B900113AE2 /* shadows5d.frag */,
+			);
+			name = Shaders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

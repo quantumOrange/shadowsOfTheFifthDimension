@@ -2,19 +2,16 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-  
     shader.load("shadows5d");
     particle.setup();
-    //shader.begin();
-       // shader.setUniform1f("lifetime", 8);
-    //shader.end();
 }
 
 //--------------------------------------------------------------
-float endTime = 8;
-bool realtime = false;
+float endTime = 100;
+bool realtime = true;
 bool stop = false;
 float t =0;
+
 void ofApp::update(){
     
     //timer
@@ -28,7 +25,6 @@ void ofApp::update(){
         dt = 1.0/framePerSec;
     }
     
-    
     particle.update(dt);
     
     if(!stop){
@@ -40,6 +36,7 @@ void ofApp::update(){
     }
     
     if(realtime) return;
+    
     int n = ofGetFrameNum();
     if(n > 0) {
         auto str = "frames/" + ofToString(n,4,'0') + ".png";
@@ -55,6 +52,7 @@ void ofApp::draw(){
         shader.setUniform1f("time", time);
         shader.setUniform4f("origin_a", p.x,p.y,p.z,p.w);
         shader.setUniform1f("origin_v", p.v);
+        shader.setUniform2f("resolution",ofGetWidth(),ofGetHeight());
         ofDrawRectangle(0,0,ofGetWidth(),ofGetHeight());
     shader.end();
     
